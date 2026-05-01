@@ -1,0 +1,20 @@
+analysis:
+  max_file_size_mb: 200
+  max_string_file_size_mb: 50
+  min_string_length: 5
+  string_limit_per_file: 2000
+  jobs: 1
+  keep_extracted: true
+paths:
+  high_risk:
+    - /etc
+    - /usr/bin
+    - /usr/sbin
+    - /bin
+    - /sbin
+    - /lib/systemd
+    - /etc/systemd
+    - /etc/cron.d
+    - /etc/cron.daily
+    - /var/spool/cron
+    - /opt

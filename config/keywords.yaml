@@ -1,0 +1,32 @@
+script_keywords:
+  - id: download_curl
+    pattern: curl
+    severity: medium
+  - id: download_wget
+    pattern: wget
+    severity: medium
+  - id: shell_eval
+    pattern: eval
+    severity: high
+  - id: base64_decode
+    pattern: base64 -d
+    severity: high
+  - id: suid_change
+    pattern: chmod +s
+    severity: high
+  - id: service_change
+    pattern: systemctl
+    severity: medium
+  - id: cron_change
+    pattern: crontab
+    severity: medium
+string_keywords:
+  - id: shell_reverse
+    pattern: /dev/tcp/
+    severity: high
+  - id: embedded_private_key
+    pattern: BEGIN PRIVATE KEY
+    severity: high
+  - id: shell_download
+    pattern: bash -c
+    severity: medium
