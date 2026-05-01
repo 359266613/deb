@@ -82,17 +82,70 @@ C:\Users\wyq\Desktop\opencode\deb插件逆向分析通用脚本\outputs\20260501
 
 ### 6. 查看结果
 
-分析完成后，优先查看：
+分析命令执行成功后，会在终端输出本次运行目录，例如：
 
 ```text
-outputs\<run_id>\report.md
-outputs\<run_id>\packages\<package_id>\report.md
+C:\Users\wyq\Desktop\opencode\deb插件逆向分析通用脚本\outputs\20260501T160754+0000
+```
+
+下面文档里的 `<run_id>` 是占位符，不能原样输入到 PowerShell。你需要把它替换成真实目录名，例如 `20260501T160754+0000`。
+
+#### 方式一：直接打开刚才输出的目录
+
+如果刚才输出的是：
+
+```text
+C:\Users\wyq\Desktop\opencode\deb插件逆向分析通用脚本\outputs\20260501T160754+0000
+```
+
+打开总览报告：
+
+```powershell
+notepad ".\outputs\20260501T160754+0000\report.md"
+```
+
+打开该批次的输出目录：
+
+```powershell
+explorer ".\outputs\20260501T160754+0000"
+```
+
+#### 方式二：自动打开最新一次分析报告
+
+如果你不想手动复制 `run_id`，可以直接执行：
+
+```powershell
+$Run = Get-ChildItem ".\outputs" -Directory | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+notepad (Join-Path $Run.FullName "report.md")
+```
+
+打开最新一次分析的目录：
+
+```powershell
+$Run = Get-ChildItem ".\outputs" -Directory | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+explorer $Run.FullName
+```
+
+#### 方式三：打开单个 deb 的详细报告
+
+单包详细报告在：
+
+```text
+outputs\<真实run_id>\packages\<真实package_id>\report.md
+```
+
+可以用 PowerShell 自动找到最新一次分析里的第一个单包报告：
+
+```powershell
+$Run = Get-ChildItem ".\outputs" -Directory | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+$PkgReport = Get-ChildItem (Join-Path $Run.FullName "packages") -Filter "report.md" -Recurse | Select-Object -First 1
+notepad $PkgReport.FullName
 ```
 
 其中：
 
-- `outputs\<run_id>\report.md` 是本次运行的总览报告
-- `outputs\<run_id>\packages\<package_id>\report.md` 是单个 deb 的详细分析报告
+- `outputs\<真实run_id>\report.md` 是本次运行的总览报告
+- `outputs\<真实run_id>\packages\<真实package_id>\report.md` 是单个 deb 的详细分析报告
 
 需要深入分析时，再看这些结构化结果：
 
