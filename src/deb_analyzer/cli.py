@@ -14,6 +14,7 @@ from .extractor import DebFormatError, extract_deb
 from .filetree import analyze_filetree
 from .findings import collect_findings, filetree_findings
 from .hashing import hash_input, hash_tree
+from .ios_analysis import analyze_ios_plugin
 from .metadata import analyze_metadata
 from .reporting import package_report_md, run_report_md, write_package_outputs
 from .scripts_scan import scan_scripts
@@ -57,10 +58,15 @@ def analyze_one(deb_path: Path, run_dir: Path, config: dict[str, Any], capabilit
             if new_dir != pkg_dir:
                 pkg_dir.rename(new_dir)
                 pkg_dir = new_dir
+                control_dir = pkg_dir / "extracted" / "control"
+                data_dir = pkg_dir / "extracted" / "data"
+                extracted["control_dir"] = str(control_dir)
+                extracted["data_dir"] = str(data_dir)
         filetree = analyze_filetree(data_dir, config)
         scripts = scan_scripts(control_dir, config)
         strings = scan_strings(data_dir, config)
         binaries = analyze_binaries(data_dir, capabilities)
+        ios_analysis = analyze_ios_plugin(data_dir, metadata, binaries)
         hashes = {"control": hash_tree(control_dir), "data": hash_tree(data_dir)}
         findings = collect_findings(filetree_findings(filetree), scripts, strings, binaries)
         artifacts = {"extracted": extracted, "report": str(pkg_dir / "report.md")}
@@ -72,18 +78,20 @@ def analyze_one(deb_path: Path, run_dir: Path, config: dict[str, Any], capabilit
             "scripts": scripts,
             "strings": strings,
             "binaries": binaries,
+            "ios_analysis": ios_analysis,
             "hashes": hashes,
             "findings": findings,
             "artifacts": artifacts,
         })
-        (pkg_dir / "report.md").write_text(package_report_md(result["package_id"], metadata, filetree, findings), encoding="utf-8")
+        (pkg_dir / "report.md").write_text(package_report_md(result["package_id"], metadata, filetree, findings, binaries, ios_analysis), encoding="utf-8")
         result.update({
             "status": "ok",
             "package": metadata.get("package"),
             "version": metadata.get("version"),
             "architecture": metadata.get("architecture"),
             "file_count": filetree.get("file_count", 0),
-            "elf_count": binaries.get("elf_count", 0),
+            "binary_count": binaries.get("binary_count", 0),
+            "macho_count": binaries.get("macho_count", 0),
             "finding_count": findings.get("count", 0),
             "artifact_dir": str(pkg_dir),
         })
@@ -98,7 +106,7 @@ def analyze_one(deb_path: Path, run_dir: Path, config: dict[str, Any], capabilit
 
 def write_summary_csv(path: Path, rows: list[dict[str, Any]]) -> None:
     ensure_dir(path.parent)
-    fields = ["package_id", "status", "package", "version", "architecture", "file_count", "elf_count", "finding_count", "artifact_dir", "error_code", "error"]
+    fields = ["package_id", "status", "package", "version", "architecture", "file_count", "binary_count", "macho_count", "finding_count", "artifact_dir", "error_code", "error"]
     with path.open("w", encoding="utf-8-sig", newline="") as fh:
         writer = csv.DictWriter(fh, fieldnames=fields, extrasaction="ignore")
         writer.writeheader()

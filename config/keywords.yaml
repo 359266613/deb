@@ -1,8 +1,8 @@
 script_keywords:
-  - id: download_curl
+  - id: network_download_curl
     pattern: curl
     severity: medium
-  - id: download_wget
+  - id: network_download_wget
     pattern: wget
     severity: medium
   - id: shell_eval
@@ -11,22 +11,16 @@ script_keywords:
   - id: base64_decode
     pattern: base64 -d
     severity: high
-  - id: suid_change
-    pattern: chmod +s
-    severity: high
-  - id: service_change
-    pattern: systemctl
-    severity: medium
-  - id: cron_change
-    pattern: crontab
-    severity: medium
 string_keywords:
-  - id: shell_reverse
-    pattern: /dev/tcp/
-    severity: high
   - id: embedded_private_key
     pattern: BEGIN PRIVATE KEY
     severity: high
-  - id: shell_download
-    pattern: bash -c
+  - id: ios_license_text
+    pattern: license
+    severity: medium
+  - id: ios_authorization_text
+    pattern: 授权
+    severity: medium
+  - id: ios_device_identifier
+    pattern: Unique Device ID
     severity: medium

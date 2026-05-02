@@ -7,7 +7,7 @@ from typing import Any
 
 from .utils import command_output, which
 
-TOOLS = ["python", "7z", "tar", "ar", "dpkg-deb", "file", "readelf", "objdump", "strings", "syft"]
+TOOLS = ["python", "7z", "tar", "ar", "dpkg-deb", "file"]
 
 
 def detect_capabilities() -> dict[str, Any]:

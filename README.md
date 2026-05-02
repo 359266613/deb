@@ -1,6 +1,6 @@
-# deb 插件逆向分析通用脚本
+# iOS 越狱 deb 插件逆向分析脚本
 
-这是一套面向 `.deb` 插件包的静态逆向分析工具。默认不安装包、不执行 `preinst/postinst/prerm/postrm`，只做解包、元数据解析、文件树、哈希、维护脚本、字符串、ELF 和差异分析。
+这是一套面向 iOS 越狱 `.deb` 插件包的静态逆向分析工具。默认不安装包、不执行 `preinst/postinst/prerm/postrm`，只做安全解包、control 元数据、文件树、哈希、维护脚本、字符串、plist、Mach-O、授权线索、偏好项、Substrate Hook 线索和可复刻移植方法分析。
 
 ## 快速开始
 
@@ -186,15 +186,17 @@ extracted\data\
 
 重点关注：
 
+- `extracted\control\control`
 - `extracted\control\preinst`
 - `extracted\control\postinst`
 - `extracted\control\prerm`
 - `extracted\control\postrm`
-- `extracted\data\etc\`
-- `extracted\data\usr\bin\`
-- `extracted\data\usr\sbin\`
-- `extracted\data\lib\systemd\`
-- `extracted\data\opt\`
+- `extracted\data\Library\MobileSubstrate\DynamicLibraries\`
+- `extracted\data\var\jb\Library\MobileSubstrate\DynamicLibraries\`
+- `extracted\data\Library\PreferenceBundles\`
+- `extracted\data\var\jb\Library\PreferenceBundles\`
+- `extracted\data\Library\PreferenceLoader\Preferences\`
+- `extracted\data\var\jb\Library\PreferenceLoader\Preferences\`
 
 ### 8. 批量分析多个 deb
 
@@ -229,15 +231,15 @@ outputs\diff\diff.json
 
 ### 10. 结果判断重点
 
-优先看 `report.md` 和 `findings.json` 中这些类型：
+优先看 `report.md` 和 `ios_analysis.json` 中这些内容：
 
-- `maintainer_script`：维护脚本中出现可疑命令
-- `url`：硬编码 URL
-- `ip`：硬编码 IP
-- `domain`：硬编码域名
-- `token_like`：疑似 token、secret、password
-- `filetree`：高风险路径、SUID、world-writable、隐藏文件
-- `executable_elf`：可执行路径中的 ELF 文件
+- `授权逻辑初判`：判断是否存在设备码、许可证、验签、联网授权等逻辑
+- `授权相关证据`：定位许可证 UI、设备指纹、加密验签、联系信息所在文件
+- `Tweak 注入 Bundles/Executables`：确认插件注入目标
+- `Mach-O 摘要`：确认核心 dylib、设置 bundle 二进制和架构
+- `偏好项/设置读写线索`：定位 `NSUserDefaults`、`CFPreferences`、`PSSpecifier` 等配置入口
+- `Hook / Substrate 线索`：定位 `MobileSubstrate`、`Logos`、`SpringBoard` 等 Hook 入口
+- `可复刻移植方法`：按安装布局、注入目标、设置面板、授权状态机和验证步骤复刻
 
 ### 11. 常见问题
 
@@ -299,4 +301,4 @@ outputs\<run_id>\
 
 ## 可选增强工具
 
-如果系统中存在 `file`、`readelf`、`objdump`、`strings`、`syft`，报告会包含更多信息。缺失时会自动降级。
+如果系统中存在 `file`，报告会补充 Mach-O 文件类型识别。缺失时会自动降级为 Python 内置 Mach-O 头部识别。

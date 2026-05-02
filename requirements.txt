@@ -1,5 +1,3 @@
 pyyaml
 zstandard
-pyelftools
-rich
 pytest

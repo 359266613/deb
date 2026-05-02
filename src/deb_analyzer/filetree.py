@@ -10,6 +10,9 @@ from .utils import file_mode_octal, relative_posix, sha256_file
 def _risk_tags(rel: str, mode: int, high_risk_paths: list[str]) -> list[str]:
     posix = "/" + rel.replace("\\", "/").lstrip("/")
     tags = []
+    is_ios_jailbreak_path = posix.startswith("/var/jb/") or posix == "/var/jb"
+    if is_ios_jailbreak_path:
+        tags.append("ios_jailbreak_path")
     if any(posix.startswith(prefix.rstrip("/") + "/") or posix == prefix for prefix in high_risk_paths):
         tags.append("high_risk_path")
     if mode & stat.S_ISUID:
@@ -17,7 +20,7 @@ def _risk_tags(rel: str, mode: int, high_risk_paths: list[str]) -> list[str]:
     if mode & stat.S_ISGID:
         tags.append("sgid")
     if mode & 0o002:
-        tags.append("world_writable")
+        tags.append("ios_jailbreak_world_writable" if is_ios_jailbreak_path else "world_writable")
     if Path(rel).name.startswith("."):
         tags.append("hidden")
     return tags

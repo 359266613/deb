@@ -10,6 +10,52 @@ URL_RE = re.compile(r"https?://[^\s'\"<>]+", re.I)
 IP_RE = re.compile(r"\b(?:\d{1,3}\.){3}\d{1,3}\b")
 DOMAIN_RE = re.compile(r"\b(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}\b", re.I)
 TOKEN_RE = re.compile(r"\b(?:token|secret|apikey|api_key|password|passwd|bearer)[A-Za-z0-9_\-:=]{0,80}", re.I)
+BUNDLE_ID_RE = re.compile(r"\b(?:[a-z][a-z0-9-]*\.){2,}[a-z][a-z0-9-]*\b", re.I)
+PUBLIC_DOMAIN_TLDS = {
+    "com", "net", "org", "edu", "gov", "mil", "int",
+    "cn", "hk", "tw", "jp", "kr", "us", "uk", "de", "fr", "ru",
+    "io", "me", "cc", "tv", "app", "dev", "xyz", "top", "vip", "pro", "info", "biz",
+}
+IGNORED_DOMAIN_SUFFIXES = (
+    ".framework",
+    ".dylib",
+    ".plist",
+    ".bundle",
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".gif",
+    ".unsigned",
+)
+IGNORED_DOMAIN_PREFIXES = (
+    "subject.",
+    "issuer.",
+)
+BUNDLE_ID_PREFIXES = ("com.", "org.", "net.", "io.", "cn.")
+
+
+def _is_probable_public_domain(value: str) -> bool:
+    parts = value.rsplit(".", 1)
+    if len(parts) != 2:
+        return False
+    name, tld = parts
+    if tld not in PUBLIC_DOMAIN_TLDS:
+        return False
+    # Avoid treating common identifiers such as com.apple or NSBundle names as domains.
+    if name in {"com", "org", "net", "io", "cn"}:
+        return False
+    return True
+
+
+def _classify_domain_like(value: str) -> tuple[str, str] | None:
+    lowered = value.lower().strip(".,;:()[]{}<>\"'")
+    if lowered.endswith(IGNORED_DOMAIN_SUFFIXES) or lowered.startswith(IGNORED_DOMAIN_PREFIXES):
+        return None
+    if BUNDLE_ID_RE.fullmatch(lowered) and lowered.startswith(BUNDLE_ID_PREFIXES):
+        return "bundle_id", "low"
+    if DOMAIN_RE.fullmatch(lowered) and _is_probable_public_domain(lowered):
+        return "domain", "medium"
+    return None
 
 
 def scan_strings(data_dir: Path, config: dict[str, Any]) -> dict[str, Any]:
@@ -37,12 +83,21 @@ def scan_strings(data_dir: Path, config: dict[str, Any]) -> dict[str, Any]:
             continue
         matches = []
         for value in strings:
-            for kind, regex in [("url", URL_RE), ("ip", IP_RE), ("domain", DOMAIN_RE), ("token_like", TOKEN_RE)]:
+            for kind, regex in [("url", URL_RE), ("ip", IP_RE), ("token_like", TOKEN_RE)]:
                 for match in regex.findall(value):
                     evidence = match[:300]
                     finding = {"type": kind, "severity": "medium" if kind != "token_like" else "high", "path": rel, "rule_id": kind, "evidence": evidence}
                     findings.append(finding)
                     matches.append(finding)
+            for match in DOMAIN_RE.findall(value):
+                classified = _classify_domain_like(match)
+                if classified is None:
+                    continue
+                kind, severity = classified
+                evidence = match[:300]
+                finding = {"type": kind, "severity": severity, "path": rel, "rule_id": kind, "evidence": evidence}
+                findings.append(finding)
+                matches.append(finding)
             lowered = value.lower()
             for rule in keyword_rules:
                 pattern = str(rule.get("pattern", ""))

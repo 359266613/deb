@@ -15,9 +15,14 @@ DEFAULT_CONFIG = {
     },
     "paths": {
         "high_risk": [
-            "/etc", "/usr/bin", "/usr/sbin", "/bin", "/sbin",
-            "/lib/systemd", "/etc/systemd", "/etc/cron.d", "/etc/cron.daily",
-            "/usr/lib/browser", "/opt", "/var/spool/cron",
+            "/Library/MobileSubstrate/DynamicLibraries",
+            "/var/jb/Library/MobileSubstrate/DynamicLibraries",
+            "/Library/PreferenceBundles",
+            "/var/jb/Library/PreferenceBundles",
+            "/Library/PreferenceLoader/Preferences",
+            "/var/jb/Library/PreferenceLoader/Preferences",
+            "/Applications",
+            "/var/jb/Applications",
         ]
     },
 }
